@@ -1,0 +1,4 @@
+lxml
+spacy
+pandas
+textstat
