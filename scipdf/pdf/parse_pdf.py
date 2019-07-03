@@ -248,8 +248,8 @@ def parse_pdf_to_dict(pdf_path):
 def parse_figures(pdf_folder,
                   jar_path='scipdf/pdf/pdffigures2/pdffigures2-assembly-0.0.12-SNAPSHOT.jar',
                   resolution=300, 
-                  save_data='/figures/data/', 
-                  save_figures='/figures/figures/'):
+                  save_data='figures/data/', 
+                  save_figures='figures/figures/'):
     """
     Parse figures from the given scientific PDF using pdffigures2
 
@@ -260,7 +260,7 @@ def parse_figures(pdf_folder,
     save_data: path to folder that we want to save data related to figures
     save_figures: path to folder that we want to save figures
     """
-    if os.path.isfile(pdf_folder) > 0 and os.path.isdir(save_data) and os.path.isdir(save_figures):
+    if os.path.isdir(save_data) and os.path.isdir(save_figures):
         args = [
             'java',
             '-jar', jar_path,
@@ -275,6 +275,6 @@ def parse_figures(pdf_folder,
             stderr=subprocess.PIPE,
             timeout=20
         )
+        print('Done parsing figures from PDFs!')
     else:
         print('save_data and save_figures have to be placeholder folders')
-    print('Done parsing figures from PDFs!')

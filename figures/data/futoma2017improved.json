@@ -1,0 +1,101 @@
+[{
+  "renderDpi": 300,
+  "name": "1",
+  "page": 1,
+  "figType": "Figure",
+  "regionBoundary": {
+    "x1": 246.95999999999998,
+    "y1": 314.88,
+    "x2": 519.12,
+    "y2": 557.04
+  },
+  "caption": "Figure 1: This patient developed sepsis during a period of rapid deterioration in the ICU following an invasive cardiac surgery. However, our proposed model detected sepsis 17 hours before the first antibiotics were given and 36 hours before a definition for sepsis was met.",
+  "imageText": [],
+  "renderURL": "figures/figures/futoma2017improved-Figure1-1.png",
+  "captionBoundary": {
+    "x1": 245.52000427246094,
+    "y1": 582.6072387695312,
+    "x2": 522.000244140625,
+    "y2": 643.376953125
+  }
+}, {
+  "renderDpi": 300,
+  "name": "5",
+  "page": 9,
+  "figType": "Figure",
+  "regionBoundary": {
+    "x1": 348.96,
+    "y1": 285.84,
+    "x2": 522.0,
+    "y2": 428.15999999999997
+  },
+  "caption": "Figure 5: Screenshot of analytics dashboard (with fake data) that will be used to visualize our model’s predictions, to be used by a sepsis rapid response team.",
+  "imageText": [],
+  "renderURL": "figures/figures/futoma2017improved-Figure5-1.png",
+  "captionBoundary": {
+    "x1": 349.2030029296875,
+    "y1": 440.2122802734375,
+    "x2": 522.0032348632812,
+    "y2": 487.4320373535156
+  }
+}, {
+  "renderDpi": 300,
+  "name": "3",
+  "page": 7,
+  "figType": "Figure",
+  "regionBoundary": {
+    "x1": 92.88,
+    "y1": 361.91999999999996,
+    "x2": 542.16,
+    "y2": 536.16
+  },
+  "caption": "Figure 3: Results from Matched Lookback validation scheme. Left: AU-ROC as a function of number of hours before sepsis or the matched “prediction time”. Middle: AU-PR as a function of hours before sepsis. Right: For a fixed sensitivity of 80%, the number of false alarms per true alarm as a function of hours before sepsis.",
+  "imageText": [],
+  "renderURL": "figures/figures/futoma2017improved-Figure3-1.png",
+  "captionBoundary": {
+    "x1": 90.0,
+    "y1": 550.11328125,
+    "x2": 522.0001831054688,
+    "y2": 597.333984375
+  }
+}, {
+  "renderDpi": 300,
+  "name": "2",
+  "page": 3,
+  "figType": "Figure",
+  "regionBoundary": {
+    "x1": 315.84,
+    "y1": 358.56,
+    "x2": 522.24,
+    "y2": 395.28
+  },
+  "caption": "Figure 2: Schematic for the overall method. At each grid time, latent function values for the clinical time series are fed into the RNN, along with baseline covariates and indicators for medications.",
+  "imageText": ["The", "MGP-RNN", "Classiﬁer", "is", "designed", "for", "irreg-", "ularly", "spaced", "multivariate", "time", "series", "of", "vari-", "able", "length.", "The", "MGP", "is", "used", "to", "impute", "and"],
+  "renderURL": "figures/figures/futoma2017improved-Figure2-1.png",
+  "captionBoundary": {
+    "x1": 90.0,
+    "y1": 294.9012756347656,
+    "x2": 306.00018310546875,
+    "y2": 355.6710205078125
+  }
+}, {
+  "renderDpi": 300,
+  "name": "4",
+  "page": 8,
+  "figType": "Figure",
+  "regionBoundary": {
+    "x1": 349.91999999999996,
+    "y1": 228.95999999999998,
+    "x2": 538.0799999999999,
+    "y2": 418.08
+  },
+  "caption": "Figure 4: False alarms per true alarm as a function of sensitivity using the real-time validation scheme, for our final model and for NEWS. Our model demonstrates drastic reductions in false alarms across all sensitivities.",
+  "imageText": [],
+  "renderURL": "figures/figures/futoma2017improved-Figure4-1.png",
+  "captionBoundary": {
+    "x1": 349.2030029296875,
+    "y1": 432.15728759765625,
+    "x2": 522.0031127929688,
+    "y2": 506.4760437011719
+  }
+}]
