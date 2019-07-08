@@ -10,6 +10,7 @@ Run the GROBID using the given bash script before parsing PDF
 bash serve_grobid.sh
 ```
 
+This script will download GROBID and run the service at default port 8070 (see more [here](https://grobid.readthedocs.io/en/latest/Grobid-service/)).
 To parse example PDF provided in `example_data` folder, use the following function:
 
 ```python
@@ -22,3 +23,5 @@ To parse figures from PDF using [pdffigures2](https://github.com/allenai/pdffigu
 ```python
 scipdf.parse_figures('example_data') # folder should contain only PDF files
 ```
+
+You can see example output figures in `figures` folder.
