@@ -5,4 +5,5 @@ __all__ = [
     'parse_abstract',
     'parse_figure_caption',
     'parse_references'
+    'parse_pdf_to_dict'
 ]

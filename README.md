@@ -2,6 +2,16 @@
 
 A Python parser for scientific PDF based on [GROBID](https://github.com/kermitt2/grobid).
 
+## Installation
+
+Clone this repository and use `pip` to install
+
+```bash
+git clone https://github.com/titipata/scipdf_parser
+cd scipdf_parser
+pip install .
+```
+
 ## Usage
 
 Run the GROBID using the given bash script before parsing PDF
