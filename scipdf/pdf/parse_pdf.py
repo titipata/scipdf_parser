@@ -8,6 +8,8 @@ from tqdm import tqdm, tqdm_notebook
 
 
 GROBID_URL = 'http://localhost:8070'
+DIR_PATH = os.path.dirname(os.path.abspath(__file__))
+PDF_FIGURES_JAR_PATH = os.path.join(DIR_PATH, 'pdffigures2', 'pdffigures2-assembly-0.0.12-SNAPSHOT.jar')
 
 
 def list_pdf_paths(pdf_folder):
@@ -246,10 +248,9 @@ def parse_pdf_to_dict(pdf_path):
 
 
 def parse_figures(pdf_folder,
-                  jar_path='scipdf/pdf/pdffigures2/pdffigures2-assembly-0.0.12-SNAPSHOT.jar',
+                  jar_path=PDF_FIGURES_JAR_PATH,
                   resolution=300, 
-                  save_data='figures/data/', 
-                  save_figures='figures/figures/'):
+                  output_folder='figures'):
     """
     Parse figures from the given scientific PDF using pdffigures2
 
@@ -257,24 +258,36 @@ def parse_figures(pdf_folder,
     ==========
     pdf_folder: glob path to folder that contains PDF
     resolution: resolution of the output figures
-    save_data: path to folder that we want to save data related to figures
-    save_figures: path to folder that we want to save figures
+    output_folder: path to folder that we want to save parsed data (related to figures) and figures
+
+    Output
+    ======
+    folder: making a folder of output_folder/data and output_folder/figures of parsed data and figures relatively
     """
-    if os.path.isdir(save_data) and os.path.isdir(save_figures):
-        args = [
-            'java',
-            '-jar', jar_path,
-            pdf_folder,
-            '-i', str(resolution),
-            '-d', save_data,
-            '-m', save_figures
-        ]
-        _ = subprocess.run(
-            args, 
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=20
-        )
-        print('Done parsing figures from PDFs!')
+    data_path = os.path.join(output_folder, 'data')
+    figure_path = os.path.join(output_folder, 'figures')
+
+    if os.path.isdir(output_folder):
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
+        if not os.path.exists(figure_path):
+            os.mkdir(figure_path)
+
+        if os.path.isdir(data_path) and os.path.isdir(figure_path):
+            args = [
+                'java',
+                '-jar', jar_path,
+                pdf_folder,
+                '-i', str(resolution),
+                '-d', os.path.join(os.path.abspath(data_path), ''),
+                '-m', os.path.join(os.path.abspath(figure_path), '') # end path with "/"
+            ]
+            _ = subprocess.run(
+                args, 
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=20
+            )
+            print('Done parsing figures from PDFs!')
     else:
-        print('save_data and save_figures have to be placeholder folders')
+        print('output_folder have to be path to folder')

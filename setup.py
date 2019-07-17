@@ -28,6 +28,6 @@ if __name__ == "__main__":
             "Operating System :: OS Independent",
         ],
         package_data={
-            'scipdf.example_data': ['*.pdf'],
+            'scipdf': ['pdf/pdffigures2/*.jar']
         }
     )

@@ -23,7 +23,7 @@ To parse example PDF provided in `example_data` folder, use the following functi
 
 ```python
 import scipdf
-article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') 
+article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') # dictionary
 
 # output example
 >> {
@@ -39,17 +39,19 @@ article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf')
         ...
     ],
     'figures': [
-        {'figure_label': '...', 'figure_type': '...', 'figure_id': '...', 'figure_caption': '...'},
+        {'figure_label': '...', 'figure_type': '...', 'figure_id': '...', 'figure_caption': '...', 'figure_data': '...'},
         ...
     ],
     'doi': '...'
 }
+
+xml = scipdf.parse_pdf('example_data/futoma2017improved.pdf', soup=True) # option to parse full XML from GROBID
 ```
 
 To parse figures from PDF using [pdffigures2](https://github.com/allenai/pdffigures2), you can run
 
 ```python
-scipdf.parse_figures('example_data') # folder should contain only PDF files
+scipdf.parse_figures('example_data', output_folder='figures') # folder should contain only PDF files
 ```
 
 You can see example output figures in `figures` folder.
