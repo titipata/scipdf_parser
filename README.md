@@ -4,12 +4,10 @@ A Python parser for scientific PDF based on [GROBID](https://github.com/kermitt2
 
 ## Installation
 
-Clone this repository and use `pip` to install
+Use `pip` to install from this Github repository
 
 ```bash
-git clone https://github.com/titipata/scipdf_parser
-cd scipdf_parser
-pip install .
+pip install git+https://github.com/titipata/scipdf_parser
 ```
 
 ## Usage
@@ -26,6 +24,26 @@ To parse example PDF provided in `example_data` folder, use the following functi
 ```python
 import scipdf
 article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') 
+
+# output example
+>> {
+    'title': 'Proceedings of Machine Learning for Healthcare',
+    'abstract': '...',
+    'sections': [
+        {'heading': '...', 'text': '...'},
+        {'heading': '...', 'text': '...'},
+        ...
+    ],
+    'references': [
+        {'title': '...', 'year': '...', 'journal': '...', 'author': '...'},
+        ...
+    ],
+    'figures': [
+        {'figure_label': '...', 'figure_type': '...', 'figure_id': '...', 'figure_caption': '...'},
+        ...
+    ],
+    'doi': '...'
+}
 ```
 
 To parse figures from PDF using [pdffigures2](https://github.com/allenai/pdffigures2), you can run
