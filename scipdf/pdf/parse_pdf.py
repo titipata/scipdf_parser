@@ -209,7 +209,7 @@ def convert_article_soup_to_dict(article):
                 ...
             ], 
             'figures': [
-                {'figure_label': ..., 'figure_type': ..., 'figure_id': ..., 'figure_caption': ..., 'figure_date': ...},
+                {'figure_label': ..., 'figure_type': ..., 'figure_id': ..., 'figure_caption': ..., 'figure_data': ...},
                 ...
             ]
         }
@@ -256,9 +256,10 @@ def parse_figures(pdf_folder,
 
     Parameters
     ==========
-    pdf_folder: glob path to folder that contains PDF
-    resolution: resolution of the output figures
-    output_folder: path to folder that we want to save parsed data (related to figures) and figures
+    pdf_folder: str, path to a folder that contains PDF files. A folder must contains only PDF files
+    jar_path: str, default path to pdffigures2-assembly-0.0.12-SNAPSHOT.jar file
+    resolution: int, resolution of the output figures
+    output_folder: str, path to folder that we want to save parsed data (related to figures) and figures
 
     Output
     ======
