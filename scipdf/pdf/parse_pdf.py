@@ -1,5 +1,8 @@
+import re
 import os
+import sys
 from glob import glob
+import urllib
 import subprocess
 import json
 import requests
@@ -17,6 +20,20 @@ def list_pdf_paths(pdf_folder):
     list of pdf paths in pdf folder
     """
     return glob(os.path.join(pdf_folder, '*', '*', '*.pdf'))
+
+
+def validate_url(path):
+    """
+    Validate a given ``path`` if it is URL or not
+    """
+    regex = re.compile(
+        r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return re.match(regex, path) is not None
 
 
 def parse_pdf(pdf_path,
@@ -46,19 +63,26 @@ def parse_pdf(pdf_path,
     =======
     >> parsed_article = parse_pdf(pdf_path, fulltext=True, soup=True)
     """
-    if os.path.exists(pdf_path):
-        if fulltext:
-            url = '%s/api/processFulltextDocument' % grobid_url
-        else:
-            url = '%s/api/processHeaderDocument' % grobid_url
-        parsed_article = requests.post(url, files={'input': open(pdf_path, 'rb')}).text
-
-        if soup:
-            parsed_article = BeautifulSoup(parsed_article, 'lxml')
-
-        return parsed_article
+    # GROBID URL
+    if fulltext:
+        url = '%s/api/processFulltextDocument' % grobid_url
     else:
-        return None
+        url = '%s/api/processHeaderDocument' % grobid_url
+
+    if validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] != '.pdf':
+        print("The input URL has to have base name PDF.")
+        parsed_article = None
+    elif validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] == '.pdf':
+        page = urllib.request.urlopen(pdf_path).read()
+        parsed_article = requests.post(url, files={'input': page}).text
+    elif os.path.exists(pdf_path):
+        parsed_article = requests.post(url, files={'input': open(pdf_path, 'rb')}).text
+    else:
+        parsed_article = None
+
+    if soup and parsed_article is not None:
+        parsed_article = BeautifulSoup(parsed_article, 'lxml')
+    return parsed_article
 
 
 def parse_abstract(article):

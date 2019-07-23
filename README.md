@@ -19,11 +19,14 @@ bash serve_grobid.sh
 ```
 
 This script will download GROBID and run the service at default port 8070 (see more [here](https://grobid.readthedocs.io/en/latest/Grobid-service/)).
-To parse example PDF provided in `example_data` folder, use the following function:
+To parse a PDF provided in `example_data` folder or direct URL, use the following function:
 
 ```python
 import scipdf
-article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') # dictionary
+article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') # return dictionary
+ 
+# option to parse directly from URL to PDF
+article_dict = scipdf.parse_pdf_to_dict('https://www.biorxiv.org/content/biorxiv/early/2018/11/20/463760.full.pdf')
 
 # output example
 >> {
