@@ -239,19 +239,22 @@ def convert_article_soup_to_dict(article):
         }
     """
     article_dict = {}
-    title = article.find('title', attrs={'type': 'main'})
-    title = title.text.strip() if title is not None else ''
-    article_dict['title'] = title
-    article_dict['abstract'] = parse_abstract(article)
-    article_dict['sections'] = parse_sections(article)
-    article_dict['references'] = parse_references(article)
-    article_dict['figures'] = parse_figure_caption(article)
+    if article is not None:
+        title = article.find('title', attrs={'type': 'main'})
+        title = title.text.strip() if title is not None else ''
+        article_dict['title'] = title
+        article_dict['abstract'] = parse_abstract(article)
+        article_dict['sections'] = parse_sections(article)
+        article_dict['references'] = parse_references(article)
+        article_dict['figures'] = parse_figure_caption(article)
 
-    doi = article.find('idno', attrs={'type': 'DOI'})
-    doi = doi.text if doi is not None else ''
-    article_dict['doi'] = doi
+        doi = article.find('idno', attrs={'type': 'DOI'})
+        doi = doi.text if doi is not None else ''
+        article_dict['doi'] = doi
 
-    return article_dict
+        return article_dict
+    else:
+        return None
 
 
 def parse_pdf_to_dict(pdf_path):
