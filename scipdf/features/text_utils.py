@@ -51,7 +51,7 @@ def compute_text_stats(text):
     pos_tag = dict(Counter([token.tag_ for token in text])) # detailed part-of-speech
 
     n_present_verb = sum([v for k, v in pos_tag.items() if k in PRESENT_TENSE_VERB_LIST])
-    n_verb = sum([p for p in pos_tag if p in VERB_LIST])
+    n_verb = sum([v for k, v in pos_tag.items() if k in VERB_LIST])
 
     word_shape = dict(Counter([token.shape_ for token in text])) # word shape
     n_word_per_sents = [len([token for token in sent]) for sent in text.sents]

@@ -107,7 +107,8 @@ def parse_sections(article):
     for div in divs:
         div_list = list(div.children)
         if len(div_list) == 0:
-            pass
+            heading = ''
+            text = ''
         elif len(div_list) == 1:
             if isinstance(div_list[0], NavigableString):
                 heading = str(div_list[0])
