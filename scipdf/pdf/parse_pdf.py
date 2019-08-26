@@ -97,6 +97,18 @@ def parse_abstract(article):
     return abstract
 
 
+def calculate_number_of_references(div):
+    """
+    For a given section, calculate number of references made in the section
+    """
+    n_publication_ref = len([ref for ref in div.find_all('ref') if ref.attrs.get('type') == 'bibr'])
+    n_figure_ref = len([ref for ref in div.find_all('ref') if ref.attrs.get('type') == 'figure'])
+    return {
+        'n_publication_ref': n_publication_ref,
+        'n_figure_ref': n_figure_ref
+    }
+
+
 def parse_sections(article):
     """
     Parse list of sections from a given BeautifulSoup of an article 
@@ -133,9 +145,12 @@ def parse_sections(article):
                         pass
             text = ' '.join(text)
         if heading is not '' or text is not '':
+            ref_dict = calculate_number_of_references(div)
             sections.append({
-                'heading': heading, 
-                'text': text
+                'heading': heading,
+                'text': text,
+                'n_publication_ref': ref_dict['n_publication_ref'],
+                'n_figure_ref': ref_dict['n_figure_ref']
             })
     return sections
 
