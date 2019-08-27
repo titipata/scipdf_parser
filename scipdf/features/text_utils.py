@@ -3,6 +3,7 @@ import pandas as pd
 import textstat
 import spacy
 from collections import Counter
+from itertools import groupby
 
 
 nlp = spacy.load('en_core_web_sm')
@@ -12,10 +13,31 @@ VERB_LIST = ['VB', 'VBP', 'VBZ', 'VBG', 'VBN', 'VBD']
 NOUN_LIST = ['NNP', 'NNPS']
 
 
+SECTIONS_MAPS = {
+    'Abstract': 'Abstract',
+    'ABSTRACT': 'Abstract',
+    'INTRODUCTION': 'Introduction',
+    'MATERIALS AND METHODS': 'Methods',
+    'Materials and methods': 'Methods',
+    'METHODS': 'Methods',
+    'RESULTS': 'Results',
+    'CONCLUSIONS': 'Conclusions',
+    'CONCLUSIONS AND FUTURE APPLICATIONS': 'Conclusions',
+    'DISCUSSION': 'Discussion',
+    'ACKNOWLEDGMENTS': 'Acknowledgement',
+    'TABLES': 'Tables',
+    'Tabnles': 'Tables',
+    'DISCLOSURE': 'Disclosure',
+    'CONFLICT OF INTEREST': 'Disclosure',
+    'Acknowledgement': 'Acknowledgements'
+}
+
+
 def compute_readability_stats(text):
     """
     Compute reading statistics of the given text
     Reference: https://github.com/shivam5992/textstat
+
     Parameters
     ==========
     text: str, input section or abstract text
@@ -39,10 +61,12 @@ def compute_readability_stats(text):
 
 def compute_text_stats(text):
     """
-    Compute text 
+    Compute part of speech features from a given spacy wrapper of text
+
     Parameters
     ==========
     text: spacy.tokens.doc.Doc, spacy wrapper of the section or abstract text
+
     Output
     ======
     text_stat: dict, part of speech and text features extracted from the given text
@@ -75,10 +99,15 @@ def compute_text_stats(text):
 
 def compute_journal_features(article):
     """
+    Parse features about journal references from a given dictionary of parsed article e.g.
+    number of reference made, number of unique journal refered, minimum year of references, 
+    maximum year of references, ...
+
     Parameters
     ==========
     article: dict, article dictionary parsed from GROBID and converted to dictionary
-        see ``parse_metadata.py`` for the detail
+        see ``pdf/parse_pdf.py`` for the detail of the output dictionary
+
     Output
     ======
     reference_dict: dict, dictionary of 
@@ -104,3 +133,31 @@ def compute_journal_features(article):
         'min_ref_year': min_ref_year,
         'max_ref_year': max_ref_year
     }
+
+
+def merge_section_list(section_list, section_maps=SECTIONS_MAPS, section_start=''):
+    """
+    Merge a list of sections into a normalized list of sections,
+    you can get the list of sections from parsed article JSON in ``parse_pdf.py`` e.g.
+    
+    >> section_list = [s['heading'] for s in article_json['sections']]
+    >> section_list_merged = merge_section_list(section_list)
+    
+    Parameters
+    ==========
+    section_list: list, list of sections
+
+    Output
+    ======
+    section_list_merged: list,  sections
+    """
+    sect_map = section_start # text for starting section e.g. ``Introduction``
+    section_list_merged = []
+    for section in section_list:
+        if any([(s.lower() in section.lower()) for s in section_maps.keys()]):
+            sect = [s for s in section_maps.keys() if s.lower() in section.lower()][0]
+            sect_map = section_maps.get(sect, '') # 
+            section_list_merged.append(sect_map)
+        else:
+            section_list_merged.append(sect_map)
+    return section_list_merged

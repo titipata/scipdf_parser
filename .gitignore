@@ -1,6 +1,11 @@
 # Created by https://www.gitignore.io/api/python,jupyternotebooks
 # Edit at https://www.gitignore.io/?templates=python,jupyternotebooks
 
+# loaded data and notebooks
+.vscode/
+grobid-*/
+*.ipynb
+
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
