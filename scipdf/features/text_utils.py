@@ -128,6 +128,7 @@ def compute_text_stats(text):
             'n_word_per_sents': None,
             'avg_word_per_sents': None
         }
+    return text_stats_dict
 
 
 def compute_journal_features(article):
