@@ -29,5 +29,6 @@ if __name__ == "__main__":
         ],
         package_data={
             'scipdf': ['pdf/pdffigures2/*.jar']
-        }
+        },
+        scripts=['serve_grobid.sh'],
     )
