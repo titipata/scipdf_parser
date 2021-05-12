@@ -10,6 +10,10 @@ Use `pip` to install from this Github repository
 pip install git+https://github.com/titipata/scipdf_parser
 ```
 
+**Note**
+* We also need an `en_core_web_sm` model for spacy, where you can run `python -m spacy download en_core_web_sm` to download it
+* You can change GROBID version in `serve_grobid.sh` to test the parser on a new GROBID version
+
 ## Usage
 
 Run the GROBID using the given bash script before parsing PDF
