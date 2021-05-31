@@ -49,7 +49,7 @@ def parse_pdf(pdf_path,
     
     Parameters
     ==========
-    pdf_path: str, path to publication or article
+    pdf_path: str or bytes, path or URL to publication or article or bytes string of PDF
     fulltext: bool, option for parsing, if True, parse full text of the article
         if False, parse only header
     grobid_url: str, url to GROBID parser, default at 'http://localhost:8070'
@@ -69,14 +69,20 @@ def parse_pdf(pdf_path,
     else:
         url = '%s/api/processHeaderDocument' % grobid_url
 
-    if validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] != '.pdf':
-        print("The input URL has to have base name PDF.")
-        parsed_article = None
-    elif validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] == '.pdf':
-        page = urllib.request.urlopen(pdf_path).read()
-        parsed_article = requests.post(url, files={'input': page}).text
-    elif os.path.exists(pdf_path):
-        parsed_article = requests.post(url, files={'input': open(pdf_path, 'rb')}).text
+    if isinstance(pdf_path, str):
+        if validate_url(pdf_path) and os.path.splitext(pdf_path)[-1].lower() != '.pdf':
+            print("The input URL has to end with ``.pdf``")
+            parsed_article = None
+        elif validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] == '.pdf':
+            page = urllib.request.urlopen(pdf_path).read()
+            parsed_article = requests.post(url, files={'input': page}).text
+        elif os.path.exists(pdf_path):
+            parsed_article = requests.post(url, files={'input': open(pdf_path, 'rb')}).text
+        else:
+            parsed_article = None
+    elif isinstance(pdf_path, bytes):
+        # assume that incoming is byte string
+        parsed_article = requests.post(url, files={'input': pdf_path}).text
     else:
         parsed_article = None
 
