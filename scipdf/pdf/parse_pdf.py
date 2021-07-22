@@ -115,9 +115,14 @@ def calculate_number_of_references(div):
     }
 
 
-def parse_sections(article):
+def parse_sections(article, as_list=False):
     """
     Parse list of sections from a given BeautifulSoup of an article 
+    
+    Parameters
+    ==========
+    as_list: bool, if True, output text as a list of paragraph instead
+        of joining it together as one single text
     """
     article_text = article.find('text')
     divs = article_text.find_all('div', attrs={'xmlns': 'http://www.tei-c.org/ns/1.0'})
@@ -149,7 +154,8 @@ def parse_sections(article):
                         text.append(p.text)
                     except:
                         pass
-            text = ' '.join(text)
+            if not as_list:
+                text = '\n'.join(text)
         if heading is not '' or text is not '':
             ref_dict = calculate_number_of_references(div)
             sections.append({
