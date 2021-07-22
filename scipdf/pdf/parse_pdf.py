@@ -235,7 +235,7 @@ def parse_figure_caption(article):
     return figures_list
 
 
-def convert_article_soup_to_dict(article):
+def convert_article_soup_to_dict(article, as_list=False):
     """
     Function to convert BeautifulSoup to JSON format 
     similar to the output from https://github.com/allenai/science-parse/
@@ -272,7 +272,7 @@ def convert_article_soup_to_dict(article):
         title = title.text.strip() if title is not None else ''
         article_dict['title'] = title
         article_dict['abstract'] = parse_abstract(article)
-        article_dict['sections'] = parse_sections(article)
+        article_dict['sections'] = parse_sections(article, as_list=as_list)
         article_dict['references'] = parse_references(article)
         article_dict['figures'] = parse_figure_caption(article)
 
@@ -285,7 +285,7 @@ def convert_article_soup_to_dict(article):
         return None
 
 
-def parse_pdf_to_dict(pdf_path):
+def parse_pdf_to_dict(pdf_path, fulltext=True, soup=True, as_list=False):
     """
     Parse the given 
 
@@ -297,8 +297,8 @@ def parse_pdf_to_dict(pdf_path):
     =====
     article_dict: dict, dictionary of an article
     """
-    parsed_article = parse_pdf(pdf_path, fulltext=True, soup=True)
-    article_dict = convert_article_soup_to_dict(parsed_article)
+    parsed_article = parse_pdf(pdf_path, fulltext=fulltext, soup=soup)
+    article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
     return article_dict
 
 
