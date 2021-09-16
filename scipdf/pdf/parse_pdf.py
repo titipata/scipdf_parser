@@ -92,10 +92,24 @@ def parse_pdf(pdf_path,
 
 def parse_authors(article):
     """
-    Parse abstract from a given BeautifulSoup of an article 
+    Parse article from a given BeautifulSoup of an article
     """
-    div = article.find('authors')
-    return div
+    author_names = article.find('sourcedesc').findAll('persname')
+    authors = []
+    for author in author_names:
+        firstname = author.find('forename', {'type': 'first'})
+        firstname = firstname.text.strip() if firstname is not None else ''
+        middlename = author.find('forename', {'type': 'middle'})
+        middlename = middlename.text.strip() if middlename is not None else ''
+        lastname = author.find('surname')
+        lastname = lastname.text.strip() if lastname is not None else ''
+        if middlename is not '':
+            authors.append(firstname + ' ' + middlename + ' ' + lastname)
+        else:
+            authors.append(firstname + ' ' + lastname)
+    authors = '; '.join(authors)
+    return authors
+
 
 def parse_abstract(article):
     """
