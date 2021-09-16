@@ -90,6 +90,12 @@ def parse_pdf(pdf_path,
         parsed_article = BeautifulSoup(parsed_article, 'lxml')
     return parsed_article
 
+def parse_authors(article):
+    """
+    Parse abstract from a given BeautifulSoup of an article 
+    """
+    div = article.find('authors')
+    return div
 
 def parse_abstract(article):
     """
@@ -270,6 +276,7 @@ def convert_article_soup_to_dict(article, as_list=False):
     if article is not None:
         title = article.find('title', attrs={'type': 'main'})
         title = title.text.strip() if title is not None else ''
+        article_dict['authors'] = parse_authors(article)
         article_dict['title'] = title
         article_dict['abstract'] = parse_abstract(article)
         article_dict['sections'] = parse_sections(article, as_list=as_list)

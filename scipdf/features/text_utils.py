@@ -14,6 +14,8 @@ NOUN_LIST = ['NNP', 'NNPS']
 
 
 SECTIONS_MAPS = {
+    'Authors': 'Authors',
+    'AUTHORS': 'AUTHORS',
     'Abstract': 'Abstract',
     'ABSTRACT': 'Abstract',
     'INTRODUCTION': 'Introduction',
