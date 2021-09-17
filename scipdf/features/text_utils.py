@@ -18,6 +18,8 @@ SECTIONS_MAPS = {
     'AUTHORS': 'AUTHORS',
     'Abstract': 'Abstract',
     'ABSTRACT': 'Abstract',
+    'Date': 'Date',
+    'DATE': 'DATE',
     'INTRODUCTION': 'Introduction',
     'MATERIALS AND METHODS': 'Methods',
     'Materials and methods': 'Methods',
