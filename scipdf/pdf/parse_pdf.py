@@ -90,6 +90,36 @@ def parse_pdf(pdf_path,
         parsed_article = BeautifulSoup(parsed_article, 'lxml')
     return parsed_article
 
+def parse_authors(article):
+    """
+    Parse authors from a given BeautifulSoup of an article
+    """
+    author_names = article.find('sourcedesc').findAll('persname')
+    authors = []
+    for author in author_names:
+        firstname = author.find('forename', {'type': 'first'})
+        firstname = firstname.text.strip() if firstname is not None else ''
+        middlename = author.find('forename', {'type': 'middle'})
+        middlename = middlename.text.strip() if middlename is not None else ''
+        lastname = author.find('surname')
+        lastname = lastname.text.strip() if lastname is not None else ''
+        if middlename is not '':
+            authors.append(firstname + ' ' + middlename + ' ' + lastname)
+        else:
+            authors.append(firstname + ' ' + lastname)
+    authors = '; '.join(authors)
+    return authors
+
+
+def parse_date(article):
+    """
+        Parse date from a given BeautifulSoup of an article
+    """
+    pub_date = article.find('publicationstmt')
+    year = pub_date.find('date')
+    year = year.attrs.get('when') if year is not None else ''
+    return year
+
 
 def parse_abstract(article):
     """
@@ -270,6 +300,8 @@ def convert_article_soup_to_dict(article, as_list=False):
     if article is not None:
         title = article.find('title', attrs={'type': 'main'})
         title = title.text.strip() if title is not None else ''
+        article_dict['authors'] = parse_authors(article)
+        article_dict['pub_date'] = parse_date(article)
         article_dict['title'] = title
         article_dict['abstract'] = parse_abstract(article)
         article_dict['sections'] = parse_sections(article, as_list=as_list)
