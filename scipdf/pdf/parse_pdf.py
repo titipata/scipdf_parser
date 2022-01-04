@@ -1,30 +1,28 @@
 import re
 import os
-import sys
 from glob import glob
 import urllib
 import subprocess
-import json
 import requests
 from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm, tqdm_notebook
 
 
-GROBID_URL = "http://localhost:8070"
+GROBID_URL = "http://localhost:8070"  # or https://cloud.science-miner.com/grobid/ for cloud service
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 PDF_FIGURES_JAR_PATH = os.path.join(
     DIR_PATH, "pdffigures2", "pdffigures2-assembly-0.0.12-SNAPSHOT.jar"
 )
 
 
-def list_pdf_paths(pdf_folder):
+def list_pdf_paths(pdf_folder: str):
     """
     list of pdf paths in pdf folder
     """
     return glob(os.path.join(pdf_folder, "*", "*", "*.pdf"))
 
 
-def validate_url(path):
+def validate_url(path: str):
     """
     Validate a given ``path`` if it is URL or not
     """
@@ -40,7 +38,12 @@ def validate_url(path):
     return re.match(regex, path) is not None
 
 
-def parse_pdf(pdf_path, fulltext=True, soup=False, grobid_url=GROBID_URL):
+def parse_pdf(
+    pdf_path: str,
+    fulltext: bool = True,
+    soup: bool = False,
+    grobid_url: str = GROBID_URL,
+):
     """
     Function to parse PDF to XML or BeautifulSoup using GROBID tool
 
@@ -54,6 +57,7 @@ def parse_pdf(pdf_path, fulltext=True, soup=False, grobid_url=GROBID_URL):
     fulltext: bool, option for parsing, if True, parse full text of the article
         if False, parse only header
     grobid_url: str, url to GROBID parser, default at 'http://localhost:8070'
+        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
     soup: bool, if True, return BeautifulSoup of the article
 
     Output
@@ -152,7 +156,7 @@ def calculate_number_of_references(div):
     return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
 
 
-def parse_sections(article, as_list=False):
+def parse_sections(article, as_list: bool = False):
     """
     Parse list of sections from a given BeautifulSoup of an article
 
@@ -273,7 +277,7 @@ def parse_figure_caption(article):
     return figures_list
 
 
-def convert_article_soup_to_dict(article, as_list=False):
+def convert_article_soup_to_dict(article, as_list: bool = False):
     """
     Function to convert BeautifulSoup to JSON format
     similar to the output from https://github.com/allenai/science-parse/
@@ -326,7 +330,11 @@ def convert_article_soup_to_dict(article, as_list=False):
 
 
 def parse_pdf_to_dict(
-    pdf_path, fulltext=True, soup=True, as_list=False, grobid_url=GROBID_URL
+    pdf_path: str,
+    fulltext: bool = True,
+    soup: bool = True,
+    as_list: bool = False,
+    grobid_url: str = GROBID_URL,
 ):
     """
     Parse the given PDF and return dictionary of the parsed article
@@ -334,6 +342,11 @@ def parse_pdf_to_dict(
     Parameters
     ==========
     pdf_path: str, path to publication or article
+    fulltext: bool, whether to extract fulltext or not
+    soup: bool, whether to return BeautifulSoup or not
+    as_list: bool, whether to return list of sections or not
+    grobid_url: str, url to grobid server, default is `GROBID_URL`
+        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
 
     Ouput
     =====
@@ -347,7 +360,10 @@ def parse_pdf_to_dict(
 
 
 def parse_figures(
-    pdf_folder, jar_path=PDF_FIGURES_JAR_PATH, resolution=300, output_folder="figures"
+    pdf_folder: str,
+    jar_path: str = PDF_FIGURES_JAR_PATH,
+    resolution: int = 300,
+    output_folder: str = "figures",
 ):
     """
     Parse figures from the given scientific PDF using pdffigures2
