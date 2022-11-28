@@ -1,5 +1,6 @@
 import re
 import os
+import os.path as op
 from glob import glob
 import urllib
 import subprocess
@@ -9,8 +10,8 @@ from tqdm import tqdm, tqdm_notebook
 
 
 GROBID_URL = "http://localhost:8070"  # or https://cloud.science-miner.com/grobid/ for cloud service
-DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-PDF_FIGURES_JAR_PATH = os.path.join(
+DIR_PATH = op.dirname(op.abspath(__file__))
+PDF_FIGURES_JAR_PATH = op.join(
     DIR_PATH, "pdffigures2", "pdffigures2-assembly-0.0.12-SNAPSHOT.jar"
 )
 
@@ -19,7 +20,7 @@ def list_pdf_paths(pdf_folder: str):
     """
     list of pdf paths in pdf folder
     """
-    return glob(os.path.join(pdf_folder, "*", "*", "*.pdf"))
+    return glob(op.join(pdf_folder, "*", "*", "*.pdf"))
 
 
 def validate_url(path: str):
@@ -75,13 +76,13 @@ def parse_pdf(
         url = "%s/api/processHeaderDocument" % grobid_url
 
     if isinstance(pdf_path, str):
-        if validate_url(pdf_path) and os.path.splitext(pdf_path)[-1].lower() != ".pdf":
+        if validate_url(pdf_path) and op.splitext(pdf_path)[-1].lower() != ".pdf":
             print("The input URL has to end with ``.pdf``")
             parsed_article = None
-        elif validate_url(pdf_path) and os.path.splitext(pdf_path)[-1] == ".pdf":
+        elif validate_url(pdf_path) and op.splitext(pdf_path)[-1] == ".pdf":
             page = urllib.request.urlopen(pdf_path).read()
             parsed_article = requests.post(url, files={"input": page}).text
-        elif os.path.exists(pdf_path):
+        elif op.exists(pdf_path):
             parsed_article = requests.post(
                 url, files={"input": open(pdf_path, "rb")}
             ).text
@@ -379,31 +380,33 @@ def parse_figures(
     ======
     folder: making a folder of output_folder/data and output_folder/figures of parsed data and figures relatively
     """
-    data_path = os.path.join(output_folder, "data")
-    figure_path = os.path.join(output_folder, "figures")
+    if not op.isdir(output_folder):
+        os.makedirs(output_folder)
 
-    if os.path.isdir(output_folder):
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-        if not os.path.exists(figure_path):
-            os.mkdir(figure_path)
+    # create ``data`` and ``figures`` subfolder within ``output_folder``
+    data_path = op.join(output_folder, "data")
+    figure_path = op.join(output_folder, "figures")
+    if not op.exists(data_path):
+        os.makedirs(data_path)
+    if not op.exists(figure_path):
+        os.makedirs(figure_path)
 
-        if os.path.isdir(data_path) and os.path.isdir(figure_path):
-            args = [
-                "java",
-                "-jar",
-                jar_path,
-                pdf_folder,
-                "-i",
-                str(resolution),
-                "-d",
-                os.path.join(os.path.abspath(data_path), ""),
-                "-m",
-                os.path.join(os.path.abspath(figure_path), ""),  # end path with "/"
-            ]
-            _ = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
-            )
-            print("Done parsing figures from PDFs!")
+    if op.isdir(data_path) and op.isdir(figure_path):
+        args = [
+            "java",
+            "-jar",
+            jar_path,
+            pdf_folder,
+            "-i",
+            str(resolution),
+            "-d",
+            os.path.join(os.path.abspath(data_path), ""),
+            "-m",
+            op.join(os.path.abspath(figure_path), ""),  # end path with "/"
+        ]
+        _ = subprocess.run(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
+        )
+        print("Done parsing figures from PDFs!")
     else:
-        print("output_folder have to be path to folder")
+        print("You may have to check of ``data`` and ``figures`` in the the output folder path.")
