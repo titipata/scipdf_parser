@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm, tqdm_notebook
 
 
-GROBID_URL = "http://localhost:8070"  # or https://cloud.science-miner.com/grobid/ for cloud service
+GROBID_URL = "http://localhost:8070"
 DIR_PATH = op.dirname(op.abspath(__file__))
 PDF_FIGURES_JAR_PATH = op.join(
     DIR_PATH, "pdffigures2", "pdffigures2-assembly-0.0.12-SNAPSHOT.jar"
@@ -43,7 +43,8 @@ def parse_pdf(
     pdf_path: str,
     fulltext: bool = True,
     soup: bool = False,
-    grobid_url: str = GROBID_URL,
+    return_coordinates: bool = True,
+    grobid_url: str = GROBID_URL
 ):
     """
     Function to parse PDF to XML or BeautifulSoup using GROBID tool
@@ -74,6 +75,16 @@ def parse_pdf(
         url = "%s/api/processFulltextDocument" % grobid_url
     else:
         url = "%s/api/processHeaderDocument" % grobid_url
+
+    files = []
+    if return_coordinates:
+        files += [
+            ("teiCoordinates", (None, "persName")),
+            ("teiCoordinates", (None, "figure")),
+            ("teiCoordinates", (None, "ref")),
+            ("teiCoordinates", (None, "formula")),
+            ("teiCoordinates", (None, "biblStruct")),
+        ]
 
     if isinstance(pdf_path, str):
         if validate_url(pdf_path) and op.splitext(pdf_path)[-1].lower() != ".pdf":
@@ -198,6 +209,7 @@ def parse_sections(article, as_list: bool = False):
                         pass
             if not as_list:
                 text = "\n".join(text)
+
         if heading is not "" or text is not "":
             ref_dict = calculate_number_of_references(div)
             sections.append(
@@ -278,6 +290,27 @@ def parse_figure_caption(article):
     return figures_list
 
 
+def parse_formulas(article):
+    """
+    Parse list of formulas from a given BeautifulSoup of an article
+    """
+    formulas_list = []
+    formulas = article.find_all("formula")
+    for formula in formulas:
+        formula_id = formula.attrs["xml:id"] or ""
+        formula_text = formula.text
+        formula_coordinates = formula.attrs.get("coords") or ""
+        formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
+        formulas_list.append(
+            {
+                "formula_id": formula_id,
+                "formula_text": formula_text,
+                "formula_coordinates": formula_coordinates,
+            }
+        )
+    return formulas_list
+
+
 def convert_article_soup_to_dict(article, as_list: bool = False):
     """
     Function to convert BeautifulSoup to JSON format
@@ -313,13 +346,15 @@ def convert_article_soup_to_dict(article, as_list: bool = False):
     if article is not None:
         title = article.find("title", attrs={"type": "main"})
         title = title.text.strip() if title is not None else ""
+
+        article_dict["title"] = title
         article_dict["authors"] = parse_authors(article)
         article_dict["pub_date"] = parse_date(article)
-        article_dict["title"] = title
         article_dict["abstract"] = parse_abstract(article)
         article_dict["sections"] = parse_sections(article, as_list=as_list)
         article_dict["references"] = parse_references(article)
         article_dict["figures"] = parse_figure_caption(article)
+        article_dict["formulas"] = parse_formulas(article)
 
         doi = article.find("idno", attrs={"type": "DOI"})
         doi = doi.text if doi is not None else ""
@@ -354,7 +389,7 @@ def parse_pdf_to_dict(
     article_dict: dict, dictionary of an article
     """
     parsed_article = parse_pdf(
-        pdf_path, fulltext=fulltext, soup=soup, grobid_url=grobid_url
+        pdf_path, fulltext=True, soup=True, return_coordinates=True, grobid_url=grobid_url
     )
     article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
     return article_dict
@@ -400,9 +435,9 @@ def parse_figures(
             "-i",
             str(resolution),
             "-d",
-            os.path.join(os.path.abspath(data_path), ""),
+            op.join(op.abspath(data_path), ""),
             "-m",
-            op.join(os.path.abspath(figure_path), ""),  # end path with "/"
+            op.join(op.abspath(figure_path), ""),  # end path with "/"
         ]
         _ = subprocess.run(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
