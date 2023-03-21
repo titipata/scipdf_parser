@@ -44,7 +44,7 @@ def parse_pdf(
     fulltext: bool = True,
     soup: bool = False,
     return_coordinates: bool = True,
-    grobid_url: str = GROBID_URL
+    grobid_url: str = GROBID_URL,
 ):
     """
     Function to parse PDF to XML or BeautifulSoup using GROBID tool
@@ -300,14 +300,15 @@ def parse_formulas(article):
         formula_id = formula.attrs["xml:id"] or ""
         formula_text = formula.text
         formula_coordinates = formula.attrs.get("coords") or ""
-        formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
-        formulas_list.append(
-            {
-                "formula_id": formula_id,
-                "formula_text": formula_text,
-                "formula_coordinates": formula_coordinates,
-            }
-        )
+        if formula_coordinates is not "":
+            formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
+            formulas_list.append(
+                {
+                    "formula_id": formula_id,
+                    "formula_text": formula_text,
+                    "formula_coordinates": formula_coordinates,
+                }
+            )
     return formulas_list
 
 
@@ -370,6 +371,7 @@ def parse_pdf_to_dict(
     fulltext: bool = True,
     soup: bool = True,
     as_list: bool = False,
+    return_coordinates: bool = True,
     grobid_url: str = GROBID_URL,
 ):
     """
@@ -389,7 +391,11 @@ def parse_pdf_to_dict(
     article_dict: dict, dictionary of an article
     """
     parsed_article = parse_pdf(
-        pdf_path, fulltext=True, soup=True, return_coordinates=True, grobid_url=grobid_url
+        pdf_path,
+        fulltext=fulltext,
+        soup=soup,
+        return_coordinates=return_coordinates,
+        grobid_url=grobid_url,
     )
     article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
     return article_dict
@@ -444,4 +450,6 @@ def parse_figures(
         )
         print("Done parsing figures from PDFs!")
     else:
-        print("You may have to check of ``data`` and ``figures`` in the the output folder path.")
+        print(
+            "You may have to check of ``data`` and ``figures`` in the the output folder path."
+        )
