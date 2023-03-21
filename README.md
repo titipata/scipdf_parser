@@ -10,6 +10,10 @@ Use `pip` to install from this Github repository
 pip install git+https://github.com/titipata/scipdf_parser
 ```
 
+**Note**
+* We also need an `en_core_web_sm` model for spacy, where you can run `python -m spacy download en_core_web_sm` to download it
+* You can change GROBID version in `serve_grobid.sh` to test the parser on a new GROBID version
+
 ## Usage
 
 Run the GROBID using the given bash script before parsing PDF
@@ -25,8 +29,8 @@ To parse a PDF provided in `example_data` folder or direct URL, use the followin
 import scipdf
 article_dict = scipdf.parse_pdf_to_dict('example_data/futoma2017improved.pdf') # return dictionary
  
-# option to parse directly from URL to PDF
-article_dict = scipdf.parse_pdf_to_dict('https://www.biorxiv.org/content/biorxiv/early/2018/11/20/463760.full.pdf')
+# option to parse directly from URL to PDF, if as_list is set to True, output 'text' of parsed section will be in a list of paragraphs instead
+article_dict = scipdf.parse_pdf_to_dict('https://www.biorxiv.org/content/biorxiv/early/2018/11/20/463760.full.pdf', as_list=False)
 
 # output example
 >> {

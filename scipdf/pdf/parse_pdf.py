@@ -1,10 +1,9 @@
 import re
 import os
-import sys
+import os.path as op
 from glob import glob
 import urllib
 import subprocess
-import json
 import requests
 from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm, tqdm_notebook
@@ -24,7 +23,7 @@ def list_pdf_paths(pdf_folder):
     return glob(os.path.join(pdf_folder, "*", "*", "*.pdf"))
 
 
-def validate_url(path):
+def validate_url(path: str):
     """
     Validate a given ``path`` if it is URL or not
     """
@@ -41,7 +40,11 @@ def validate_url(path):
 
 
 def parse_pdf(
-    pdf_path, fulltext=True, soup=False, return_coordinates=True, grobid_url=GROBID_URL
+    pdf_path: str,
+    fulltext: bool = True,
+    soup: bool = False,
+    return_coordinates: bool = True,
+    grobid_url: str = GROBID_URL
 ):
     """
     Function to parse PDF to XML or BeautifulSoup using GROBID tool
@@ -52,10 +55,11 @@ def parse_pdf(
 
     Parameters
     ==========
-    pdf_path: str, path to publication or article
+    pdf_path: str or bytes, path or URL to publication or article or bytes string of PDF
     fulltext: bool, option for parsing, if True, parse full text of the article
         if False, parse only header
     grobid_url: str, url to GROBID parser, default at 'http://localhost:8070'
+        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
     soup: bool, if True, return BeautifulSoup of the article
 
     Output
@@ -73,7 +77,6 @@ def parse_pdf(
         url = "%s/api/processHeaderDocument" % grobid_url
 
     files = []
-
     if return_coordinates:
         files += [
             ("teiCoordinates", (None, "persName")),
@@ -83,26 +86,59 @@ def parse_pdf(
             ("teiCoordinates", (None, "biblStruct")),
         ]
 
-    if validate_url(pdf_path):
-        if os.path.splitext(pdf_path)[-1] != ".pdf":
-            print("The input URL has to have base name PDF.")
-            return None
-        else:
+    if isinstance(pdf_path, str):
+        if validate_url(pdf_path) and op.splitext(pdf_path)[-1].lower() != ".pdf":
+            print("The input URL has to end with ``.pdf``")
+            parsed_article = None
+        elif validate_url(pdf_path) and op.splitext(pdf_path)[-1] == ".pdf":
             page = urllib.request.urlopen(pdf_path).read()
-            files += [("input", (None, page))]
-            parsed_article = requests.post(url, files=files).text
-
-    elif os.path.exists(pdf_path):
-        files += [("input", (None, open(pdf_path, "rb")))]
-        parsed_article = requests.post(url, files=files).text
-
+            parsed_article = requests.post(url, files={"input": page}).text
+        elif op.exists(pdf_path):
+            parsed_article = requests.post(
+                url, files={"input": open(pdf_path, "rb")}
+            ).text
+        else:
+            parsed_article = None
+    elif isinstance(pdf_path, bytes):
+        # assume that incoming is byte string
+        parsed_article = requests.post(url, files={"input": pdf_path}).text
     else:
         parsed_article = None
 
     if soup and parsed_article is not None:
         parsed_article = BeautifulSoup(parsed_article, "lxml")
-
     return parsed_article
+
+
+def parse_authors(article):
+    """
+    Parse authors from a given BeautifulSoup of an article
+    """
+    author_names = article.find("sourcedesc").findAll("persname")
+    authors = []
+    for author in author_names:
+        firstname = author.find("forename", {"type": "first"})
+        firstname = firstname.text.strip() if firstname is not None else ""
+        middlename = author.find("forename", {"type": "middle"})
+        middlename = middlename.text.strip() if middlename is not None else ""
+        lastname = author.find("surname")
+        lastname = lastname.text.strip() if lastname is not None else ""
+        if middlename is not "":
+            authors.append(firstname + " " + middlename + " " + lastname)
+        else:
+            authors.append(firstname + " " + lastname)
+    authors = "; ".join(authors)
+    return authors
+
+
+def parse_date(article):
+    """
+    Parse date from a given BeautifulSoup of an article
+    """
+    pub_date = article.find("publicationstmt")
+    year = pub_date.find("date")
+    year = year.attrs.get("when") if year is not None else ""
+    return year
 
 
 def parse_abstract(article):
@@ -111,12 +147,11 @@ def parse_abstract(article):
     """
     div = article.find("abstract")
     abstract = ""
-    if div is not None:
-        for p in list(div.children):
-            if not isinstance(p, NavigableString) and len(list(p)) > 0:
-                abstract += " ".join(
-                    [elem.text for elem in p if not isinstance(elem, NavigableString)]
-                )
+    for p in list(div.children):
+        if not isinstance(p, NavigableString) and len(list(p)) > 0:
+            abstract += " ".join(
+                [elem.text for elem in p if not isinstance(elem, NavigableString)]
+            )
     return abstract
 
 
@@ -133,9 +168,14 @@ def calculate_number_of_references(div):
     return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
 
 
-def parse_sections(article):
+def parse_sections(article, as_list: bool = False):
     """
     Parse list of sections from a given BeautifulSoup of an article
+
+    Parameters
+    ==========
+    as_list: bool, if True, output text as a list of paragraph instead
+        of joining it together as one single text
     """
     article_text = article.find("text")
     divs = article_text.find_all("div", attrs={"xmlns": "http://www.tei-c.org/ns/1.0"})
@@ -168,6 +208,9 @@ def parse_sections(article):
                     except:
                         pass
             text = " ".join(text)
+            if not as_list:
+                text = "\n".join(text)
+
         if heading is not "" or text is not "":
             ref_dict = calculate_number_of_references(div)
             sections.append(
@@ -269,7 +312,7 @@ def parse_formulas(article):
     return formulas_list
 
 
-def convert_article_soup_to_dict(article):
+def convert_article_soup_to_dict(article, as_list: bool = False):
     """
     Function to convert BeautifulSoup to JSON format
     similar to the output from https://github.com/allenai/science-parse/
@@ -304,12 +347,14 @@ def convert_article_soup_to_dict(article):
     if article is not None:
         title = article.find("title", attrs={"type": "main"})
         title = title.text.strip() if title is not None else ""
+
         article_dict["title"] = title
+        article_dict["authors"] = parse_authors(article)
+        article_dict["pub_date"] = parse_date(article)
         article_dict["abstract"] = parse_abstract(article)
-        article_dict["sections"] = parse_sections(article)
+        article_dict["sections"] = parse_sections(article, as_list=as_list)
         article_dict["references"] = parse_references(article)
         article_dict["figures"] = parse_figure_caption(article)
-        article_dict["formulas"] = parse_formulas(article)
 
         doi = article.find("idno", attrs={"type": "DOI"})
         doi = doi.text if doi is not None else ""
@@ -320,13 +365,24 @@ def convert_article_soup_to_dict(article):
         return None
 
 
-def parse_pdf_to_dict(pdf_path):
+def parse_pdf_to_dict(
+    pdf_path: str,
+    fulltext: bool = True,
+    soup: bool = True,
+    as_list: bool = False,
+    grobid_url: str = GROBID_URL,
+):
     """
-    Parse the given
+    Parse the given PDF and return dictionary of the parsed article
 
     Parameters
     ==========
     pdf_path: str, path to publication or article
+    fulltext: bool, whether to extract fulltext or not
+    soup: bool, whether to return BeautifulSoup or not
+    as_list: bool, whether to return list of sections or not
+    grobid_url: str, url to grobid server, default is `GROBID_URL`
+        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
 
     Ouput
     =====
@@ -335,12 +391,15 @@ def parse_pdf_to_dict(pdf_path):
     parsed_article = parse_pdf(
         pdf_path, fulltext=True, soup=True, return_coordinates=True
     )
-    article_dict = convert_article_soup_to_dict(parsed_article)
+    article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
     return article_dict
 
 
 def parse_figures(
-    pdf_folder, jar_path=PDF_FIGURES_JAR_PATH, resolution=300, output_folder="figures"
+    pdf_folder: str,
+    jar_path: str = PDF_FIGURES_JAR_PATH,
+    resolution: int = 300,
+    output_folder: str = "figures",
 ):
     """
     Parse figures from the given scientific PDF using pdffigures2
@@ -356,31 +415,33 @@ def parse_figures(
     ======
     folder: making a folder of output_folder/data and output_folder/figures of parsed data and figures relatively
     """
-    data_path = os.path.join(output_folder, "data")
-    figure_path = os.path.join(output_folder, "figures")
+    if not op.isdir(output_folder):
+        os.makedirs(output_folder)
 
-    if os.path.isdir(output_folder):
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-        if not os.path.exists(figure_path):
-            os.mkdir(figure_path)
+    # create ``data`` and ``figures`` subfolder within ``output_folder``
+    data_path = op.join(output_folder, "data")
+    figure_path = op.join(output_folder, "figures")
+    if not op.exists(data_path):
+        os.makedirs(data_path)
+    if not op.exists(figure_path):
+        os.makedirs(figure_path)
 
-        if os.path.isdir(data_path) and os.path.isdir(figure_path):
-            args = [
-                "java",
-                "-jar",
-                jar_path,
-                pdf_folder,
-                "-i",
-                str(resolution),
-                "-d",
-                os.path.join(os.path.abspath(data_path), ""),
-                "-m",
-                os.path.join(os.path.abspath(figure_path), ""),  # end path with "/"
-            ]
-            _ = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
-            )
-            print("Done parsing figures from PDFs!")
+    if op.isdir(data_path) and op.isdir(figure_path):
+        args = [
+            "java",
+            "-jar",
+            jar_path,
+            pdf_folder,
+            "-i",
+            str(resolution),
+            "-d",
+            os.path.join(os.path.abspath(data_path), ""),
+            "-m",
+            op.join(os.path.abspath(figure_path), ""),  # end path with "/"
+        ]
+        _ = subprocess.run(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
+        )
+        print("Done parsing figures from PDFs!")
     else:
-        print("output_folder have to be path to folder")
+        print("You may have to check of ``data`` and ``figures`` in the the output folder path.")
