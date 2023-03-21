@@ -16,7 +16,7 @@ PDF_FIGURES_JAR_PATH = op.join(
 )
 
 
-def list_pdf_paths(pdf_folder):
+def list_pdf_paths(pdf_folder: str):
     """
     list of pdf paths in pdf folder
     """
@@ -389,7 +389,7 @@ def parse_pdf_to_dict(
     article_dict: dict, dictionary of an article
     """
     parsed_article = parse_pdf(
-        pdf_path, fulltext=True, soup=True, return_coordinates=True
+        pdf_path, fulltext=True, soup=True, return_coordinates=True, grobid_url=grobid_url
     )
     article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
     return article_dict
