@@ -258,7 +258,7 @@ def parse_figure_caption(article):
     figures = article.find_all("figure")
     for figure in figures:
         figure_type = figure.attrs.get("type") or ""
-        figure_id = figure.attrs["xml:id"] or ""
+        figure_id = figure.attrs.get("xml:id") or ""
         label = figure.find("label").text
         if figure_type == "table":
             caption = figure.find("figdesc").text
