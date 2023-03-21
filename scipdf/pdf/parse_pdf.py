@@ -10,8 +10,8 @@ from tqdm import tqdm, tqdm_notebook
 
 
 GROBID_URL = "http://localhost:8070"
-DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-PDF_FIGURES_JAR_PATH = os.path.join(
+DIR_PATH = op.dirname(op.abspath(__file__))
+PDF_FIGURES_JAR_PATH = op.join(
     DIR_PATH, "pdffigures2", "pdffigures2-assembly-0.0.12-SNAPSHOT.jar"
 )
 
@@ -20,7 +20,7 @@ def list_pdf_paths(pdf_folder):
     """
     list of pdf paths in pdf folder
     """
-    return glob(os.path.join(pdf_folder, "*", "*", "*.pdf"))
+    return glob(op.join(pdf_folder, "*", "*", "*.pdf"))
 
 
 def validate_url(path: str):
@@ -207,7 +207,6 @@ def parse_sections(article, as_list: bool = False):
                         text.append(p.text)
                     except:
                         pass
-            text = " ".join(text)
             if not as_list:
                 text = "\n".join(text)
 
@@ -355,6 +354,7 @@ def convert_article_soup_to_dict(article, as_list: bool = False):
         article_dict["sections"] = parse_sections(article, as_list=as_list)
         article_dict["references"] = parse_references(article)
         article_dict["figures"] = parse_figure_caption(article)
+        article_dict["formulas"] = parse_formulas(article)
 
         doi = article.find("idno", attrs={"type": "DOI"})
         doi = doi.text if doi is not None else ""
@@ -435,9 +435,9 @@ def parse_figures(
             "-i",
             str(resolution),
             "-d",
-            os.path.join(os.path.abspath(data_path), ""),
+            op.join(op.abspath(data_path), ""),
             "-m",
-            op.join(os.path.abspath(figure_path), ""),  # end path with "/"
+            op.join(op.abspath(figure_path), ""),  # end path with "/"
         ]
         _ = subprocess.run(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
