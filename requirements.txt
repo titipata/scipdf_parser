@@ -3,3 +3,4 @@ spacy
 pandas
 textstat
 beautifulsoup4
+pydantic

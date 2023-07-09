@@ -7,20 +7,24 @@ with open("README.md", "r") as fh:
 if __name__ == "__main__":
     setup(
         name='scipdf',
-        version='0.1dev',
+        version='1.0',
         description=' Python parser for scientific PDF based on GROBID.',
         long_description=long_description,
         long_description_content_type="text/markdown",
         url='https://github.com/titipata/scipdf_parser',
-        author='Titipat Achakulvisut',
-        author_email='my.titipat@gmail.com',
-        license='(c) MIT License 2019 Titipat Achakulvisut',
+        author='Titipat Achakulvisut, Mateusz Jakubnczak',
+        author_email='my.titipat@gmail.com, mateusz.jakubczak.contact+githubSciPDfParser@gmail.com',
+        license='(c) MIT License 2023 Titipat Achakulvisut, Mateusz Jakubczak',
         install_requires=['lxml', 'requests', 'spacy', 'pandas', 'textstat'],
         packages=find_packages(),
         keywords=[
             "PDF parser",
             "GROBID",
-            "Python PDF parser"
+            "Python PDF parser",
+            "Pydantic",
+            "Scientific PDF parser",
+            "Scientific PDF",
+            "PDF",
         ],
         classifiers=[
             "Programming Language :: Python :: 3",
