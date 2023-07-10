@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 if __name__ == "__main__":
     setup(
         name='scipdf',
-        version='1.0',
+        version='1.0.1',
         description=' Python parser for scientific PDF based on GROBID.',
         long_description=long_description,
         long_description_content_type="text/markdown",
