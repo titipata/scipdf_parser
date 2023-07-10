@@ -271,8 +271,7 @@ def calculate_text_stats(article: Article, soup: BeautifulSoup) -> Article:
     article: Article, parsed article with text statistics
     """
     full_text = article.full_text
-
-    article.text_stats = TextStatistic(
+    return TextStatistic(
         readability=compute_readability_stats(full_text),
         text_stats=compute_text_stats(full_text),
         journal_features=compute_journal_features(soup),
