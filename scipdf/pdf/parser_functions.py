@@ -1,4 +1,5 @@
 import re
+import warnings
 from glob import glob
 from os import path as op
 
@@ -38,16 +39,19 @@ def parse_authors(article: BeautifulSoup) -> str:
     author_names = article.find("sourcedesc").findAll("persname")
     authors = []
     for author in author_names:
-        firstname = author.find("forename", {"type": "first"})
-        firstname = firstname.text.strip() if firstname is not None else ""
-        middlename = author.find("forename", {"type": "middle"})
-        middlename = middlename.text.strip() if middlename is not None else ""
-        lastname = author.find("surname")
-        lastname = lastname.text.strip() if lastname is not None else ""
-        if middlename != "":
-            authors.append(firstname + " " + middlename + " " + lastname)
-        else:
-            authors.append(firstname + " " + lastname)
+        try:
+            firstname = author.find("forename", {"type": "first"})
+            firstname = firstname.text.strip() if firstname is not None else ""
+            middlename = author.find("forename", {"type": "middle"})
+            middlename = middlename.text.strip() if middlename is not None else ""
+            lastname = author.find("surname")
+            lastname = lastname.text.strip() if lastname is not None else ""
+            if middlename != "":
+                authors.append(firstname + " " + middlename + " " + lastname)
+            else:
+                authors.append(firstname + " " + lastname)
+        except Exception as e:
+            warnings.warn(f"Error parsing author: {author}")
     authors = "; ".join(authors)
     return authors
 
@@ -89,7 +93,7 @@ def calculate_number_of_references(div):
     return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
 
 
-def parse_sections(article: BeautifulSoup) -> list[str]:
+def parse_sections(article: BeautifulSoup) -> list[Section]:
     """
     Parse list of sections from a given BeautifulSoup of an article
 
@@ -100,46 +104,49 @@ def parse_sections(article: BeautifulSoup) -> list[str]:
     """
     article_text = article.find("text")
     divs = article_text.find_all("div", attrs={"xmlns": "http://www.tei-c.org/ns/1.0"})
-    sections: list[str] = []
+    sections: list[Section] = []
     for div in divs:
-        div_list = list(div.children)
-        if len(div_list) == 0:
-            heading = ""
-            text = ""
-        elif len(div_list) == 1:
-            if isinstance(div_list[0], NavigableString):
-                heading = str(div_list[0])
+        try:
+            div_list = list(div.children)
+            if len(div_list) == 0:
+                heading = ""
                 text = ""
+            elif len(div_list) == 1:
+                if isinstance(div_list[0], NavigableString):
+                    heading = str(div_list[0])
+                    text = ""
+                else:
+                    heading = ""
+                    text = div_list[0].text
             else:
-                heading = ""
-                text = div_list[0].text
-        else:
-            text = []
-            heading = div_list[0]
-            if isinstance(heading, NavigableString):
-                heading = str(heading)
-                p_all = list(div.children)[1:]
-            else:
-                heading = ""
-                p_all = list(div.children)
-            for p in p_all:
-                if p is not None:
-                    try:
-                        text.append(p.text)
-                    except:
-                        pass
-            text = " ".join(text)
+                text = []
+                heading = div_list[0]
+                if isinstance(heading, NavigableString):
+                    heading = str(heading)
+                    p_all = list(div.children)[1:]
+                else:
+                    heading = ""
+                    p_all = list(div.children)
+                for p in p_all:
+                    if p is not None:
+                        try:
+                            text.append(p.text)
+                        except:
+                            pass
+                text = " ".join(text)
 
-        if heading != "" or text != "":
-            ref_dict = calculate_number_of_references(div)
-            sections.append(
-                Section(
-                    heading=heading,
-                    text=text,
-                    n_publication_ref=ref_dict["n_publication_ref"],
-                    n_figure_ref=ref_dict["n_figure_ref"],
+            if heading != "" or text != "":
+                ref_dict = calculate_number_of_references(div)
+                sections.append(
+                    Section(
+                        heading=heading,
+                        text=text,
+                        n_publication_ref=ref_dict["n_publication_ref"],
+                        n_figure_ref=ref_dict["n_figure_ref"],
+                    )
                 )
-            )
+        except Exception as e:
+            warnings.warn(f"Error parsing section: {div}")
     return sections
 
 
@@ -151,33 +158,36 @@ def parse_references(article: BeautifulSoup) -> list[Reference]:
     references = references.find_all("biblstruct") if references is not None else []
     reference_list = []
     for reference in references:
-        title = reference.find("title", attrs={"level": "a"})
-        if title is None:
-            title = reference.find("title", attrs={"level": "m"})
-        title = title.text if title is not None else ""
-        journal = reference.find("title", attrs={"level": "j"})
-        journal = journal.text if journal is not None else ""
-        if journal == "":
-            journal = reference.find("publisher")
+        try:
+            title = reference.find("title", attrs={"level": "a"})
+            if title is None:
+                title = reference.find("title", attrs={"level": "m"})
+            title = title.text if title is not None else ""
+            journal = reference.find("title", attrs={"level": "j"})
             journal = journal.text if journal is not None else ""
-        year = reference.find("date")
-        year = year.attrs.get("when")
-        authors = []
-        for author in reference.find_all("author"):
-            firstname = author.find("forename", {"type": "first"})
-            firstname = firstname.text.strip() if firstname is not None else ""
-            middlename = author.find("forename", {"type": "middle"})
-            middlename = middlename.text.strip() if middlename is not None else ""
-            lastname = author.find("surname")
-            lastname = lastname.text.strip() if lastname is not None else ""
-            if middlename != "":
-                authors.append(firstname + " " + middlename + " " + lastname)
-            else:
-                authors.append(firstname + " " + lastname)
-        authors = "; ".join(authors)
-        reference_list.append(
-            Reference(title=title, journal=journal, year=year, authors=authors)
-        )
+            if journal == "":
+                journal = reference.find("publisher")
+                journal = journal.text if journal is not None else ""
+            year = reference.find("date")
+            year = year.attrs.get("when")
+            authors = []
+            for author in reference.find_all("author"):
+                firstname = author.find("forename", {"type": "first"})
+                firstname = firstname.text.strip() if firstname is not None else ""
+                middlename = author.find("forename", {"type": "middle"})
+                middlename = middlename.text.strip() if middlename is not None else ""
+                lastname = author.find("surname")
+                lastname = lastname.text.strip() if lastname is not None else ""
+                if middlename != "":
+                    authors.append(firstname + " " + middlename + " " + lastname)
+                else:
+                    authors.append(firstname + " " + lastname)
+            authors = "; ".join(authors)
+            reference_list.append(
+                Reference(title=title, journal=journal, year=year, authors=authors)
+            )
+        except:
+            warnings.warn(f"Error parsing reference: {reference}")
     return reference_list
 
 
@@ -188,24 +198,27 @@ def parse_figure_caption(article: BeautifulSoup) -> list[Figure]:
     figures_list = []
     figures = article.find_all("figure")
     for figure in figures:
-        figure_type = figure.attrs.get("type") or ""
-        figure_id = figure.attrs.get("xml:id") or ""
-        label = figure.find("label").text
-        if figure_type == "table":
-            caption = figure.find("figdesc").text
-            data = figure.table.text
-        else:
-            caption = figure.text
-            data = ""
-        figures_list.append(
-            Figure(
-                figure_label=label,
-                figure_type=figure_type,
-                figure_id=figure_id,
-                figure_caption=caption,
-                figure_data=data,
+        try:
+            figure_type = figure.attrs.get("type") or ""
+            figure_id = figure.attrs.get("xml:id") or ""
+            label = figure.find("label").text
+            if figure_type == "table":
+                caption = figure.find("figdesc").text
+                data = figure.table.text
+            else:
+                caption = figure.text
+                data = ""
+            figures_list.append(
+                Figure(
+                    figure_label=label,
+                    figure_type=figure_type,
+                    figure_id=figure_id,
+                    figure_caption=caption,
+                    figure_data=data,
+                )
             )
-        )
+        except:
+            warnings.warn(f"Error parsing figure, {figure}")
     return figures_list
 
 
@@ -225,19 +238,22 @@ def parse_formulas(article: BeautifulSoup) -> list[Formula]:
 
     formulas = article.find_all("formula")
     for formula in formulas:
-        formula_id = formula.attrs.get("xml:id", "")
-        formula_text = formula.text
-        formula_coordinates = formula.attrs.get("coords", [])
+        try:
+            formula_id = formula.attrs.get("xml:id", "")
+            formula_text = formula.text
+            formula_coordinates = formula.attrs.get("coords", [])
 
-        if formula_coordinates:
-            formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
+            if formula_coordinates:
+                formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
 
-        formula_data = Formula(
-            formula_id=formula_id,
-            formula_text=formula_text,
-            formula_coordinates=formula_coordinates,
-        )
-        formulas_list.append(formula_data)
+            formula_data = Formula(
+                formula_id=formula_id,
+                formula_text=formula_text,
+                formula_coordinates=formula_coordinates,
+            )
+            formulas_list.append(formula_data)
+        except:
+            warnings.warn(f"Error parsing formula, {formula}")
 
     return formulas_list
 
