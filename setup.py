@@ -15,7 +15,7 @@ if __name__ == "__main__":
         author='Titipat Achakulvisut, Mateusz Jakubnczak',
         author_email='my.titipat@gmail.com, mateusz.jakubczak.contact+githubSciPDfParser@gmail.com',
         license='(c) MIT License 2023 Titipat Achakulvisut, Mateusz Jakubczak',
-        install_requires=['lxml', 'requests', 'spacy', 'pandas', 'textstat'],
+        install_requires=['lxml', 'requests', 'spacy', 'pandas', 'textstat', "pydantic"],
         packages=find_packages(),
         keywords=[
             "PDF parser",
