@@ -1,14 +1,7 @@
 #!/bin/bash
+# assumes you have docker and nvidia-container-toolkit installed
+# see https://aur.archlinux.org/packages/nvidia-container-toolkit
+# After installing, you need to restart docker
+# sudo systemctl restart docker
 
-# download GROBID if directory does not exist
-declare -r GROBID_VERSION="0.6.2" # or change to current stable version
-
-if [ ! -d grobid-${GROBID_VERSION} ]; then
-  wget https://github.com/kermitt2/grobid/archive/${GROBID_VERSION}.zip
-  unzip "${GROBID_VERSION}.zip"
-  rm "${GROBID_VERSION}.zip"
-fi
-
-# run GROBID
-cd grobid-${GROBID_VERSION} || exit
-./gradlew run
+docker run -t --rm --gpus all -p 8070:8070 grobid/grobid:0.7.3
