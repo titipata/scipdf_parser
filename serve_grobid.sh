@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# download GROBID if directory does not exist
-declare -r GROBID_VERSION="0.6.2" # or change to current stable version
+# Recommended way to run Grobid is Docker, https://grobid.readthedocs.io/en/latest/Grobid-docker/
 
-if [ ! -d grobid-${GROBID_VERSION} ]; then
-  wget https://github.com/kermitt2/grobid/archive/${GROBID_VERSION}.zip
-  unzip "${GROBID_VERSION}.zip"
-  rm "${GROBID_VERSION}.zip"
-fi
-
-# run GROBID
-cd grobid-${GROBID_VERSION} || exit
-./gradlew run
+docker run --rm --gpus all --init --ulimit core=0 -p 8080:8070 grobid/grobid:0.7.3
