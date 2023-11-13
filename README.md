@@ -16,7 +16,9 @@ pip install git+https://github.com/titipata/scipdf_parser
 
 ## Usage
 
-Run the GROBID using the given bash script before parsing PDF
+Run the GROBID using the given bash script before parsing PDF. 
+
+**NOTE**: the recommended way to [run grobid is via docker](https://grobid.readthedocs.io/en/latest/Grobid-docker/), so make sure it's running on your machine. Update the version to the [latest version](https://github.com/kermitt2/grobid/releases).
 
 ```bash
 bash serve_grobid.sh
