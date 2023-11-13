@@ -18,13 +18,13 @@ pip install git+https://github.com/titipata/scipdf_parser
 
 Run the GROBID using the given bash script before parsing PDF. 
 
-**NOTE**: the recommended way to [run grobid is via docker](https://grobid.readthedocs.io/en/latest/Grobid-docker/), so make sure it's running on your machine. Update the version to the [latest version](https://github.com/kermitt2/grobid/releases).
+**NOTE**: the recommended way to [run grobid is via docker](https://grobid.readthedocs.io/en/latest/Grobid-docker/), so make sure it's running on your machine. Update the script so that you are using [latest version](https://github.com/kermitt2/grobid/releases). Generally, at every version there are substantial improvements. 
 
 ```bash
 bash serve_grobid.sh
 ```
 
-This script will download GROBID and run the service at default port 8070 (see more [here](https://grobid.readthedocs.io/en/latest/Grobid-service/)).
+This script will run GROBID at default port 8070 (see more [here](https://grobid.readthedocs.io/en/latest/Grobid-service/)).
 To parse a PDF provided in `example_data` folder or direct URL, use the following function:
 
 ```python
