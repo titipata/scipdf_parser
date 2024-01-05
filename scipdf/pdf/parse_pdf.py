@@ -123,7 +123,7 @@ def parse_authors(article):
         middlename = middlename.text.strip() if middlename is not None else ""
         lastname = author.find("surname")
         lastname = lastname.text.strip() if lastname is not None else ""
-        if middlename is not "":
+        if middlename != "":
             authors.append(firstname + " " + middlename + " " + lastname)
         else:
             authors.append(firstname + " " + lastname)
@@ -210,7 +210,7 @@ def parse_sections(article, as_list: bool = False):
             if not as_list:
                 text = "\n".join(text)
 
-        if heading is not "" or text is not "":
+        if heading != "" or text != "":
             ref_dict = calculate_number_of_references(div)
             sections.append(
                 {
@@ -238,7 +238,7 @@ def parse_references(article):
         title = title.text if title is not None else ""
         journal = reference.find("title", attrs={"level": "j"})
         journal = journal.text if journal is not None else ""
-        if journal is "":
+        if journal == "":
             journal = reference.find("publisher")
             journal = journal.text if journal is not None else ""
         year = reference.find("date")
@@ -251,7 +251,7 @@ def parse_references(article):
             middlename = middlename.text.strip() if middlename is not None else ""
             lastname = author.find("surname")
             lastname = lastname.text.strip() if lastname is not None else ""
-            if middlename is not "":
+            if middlename != "":
                 authors.append(firstname + " " + middlename + " " + lastname)
             else:
                 authors.append(firstname + " " + lastname)
@@ -300,7 +300,7 @@ def parse_formulas(article):
         formula_id = formula.attrs["xml:id"] or ""
         formula_text = formula.text
         formula_coordinates = formula.attrs.get("coords") or ""
-        if formula_coordinates is not "":
+        if formula_coordinates != "":
             formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
             formulas_list.append(
                 {
