@@ -159,9 +159,9 @@ def find_references(div):
     """
     For a given section, find references made in the section for publications, figures, tables
     """
-    publication_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
-    figure_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
-    table_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "table"]
+    publication_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr" and "target" in ref.attrs]
+    figure_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "figure" and "target" in ref.attrs]
+    table_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "table" and "target" in ref.attrs]
     return {"publication_ref": publication_ref, "figure_ref": figure_ref, "table_ref": table_ref}
 
 
@@ -208,7 +208,7 @@ def parse_sections(article, as_list: bool = False):
                 text = "\n".join(text)
 
         if heading is not "" or text is not "":
-            ref_dict = calculate_number_of_references(div)
+            ref_dict = find_references(div)
             sections.append(
                 {
                     "heading": heading,
