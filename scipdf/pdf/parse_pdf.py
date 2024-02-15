@@ -155,17 +155,14 @@ def parse_abstract(article):
     return abstract
 
 
-def calculate_number_of_references(div):
+def find_references(div):
     """
-    For a given section, calculate number of references made in the section
+    For a given section, find references made in the section for publications, figures, tables
     """
-    n_publication_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
-    )
-    n_figure_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
-    )
-    return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
+    publication_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
+    figure_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
+    table_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "table"]
+    return {"publication_ref": publication_ref, "figure_ref": figure_ref, "table_ref": table_ref}
 
 
 def parse_sections(article, as_list: bool = False):
@@ -216,8 +213,9 @@ def parse_sections(article, as_list: bool = False):
                 {
                     "heading": heading,
                     "text": text,
-                    "n_publication_ref": ref_dict["n_publication_ref"],
-                    "n_figure_ref": ref_dict["n_figure_ref"],
+                    "publication_ref": ref_dict["publication_ref"],
+                    "figure_ref": ref_dict["figure_ref"],
+                    "table_ref": ref_dict["table_ref"],
                 }
             )
     return sections
