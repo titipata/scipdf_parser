@@ -230,6 +230,7 @@ def parse_references(article):
     references = references.find_all("biblstruct") if references is not None else []
     reference_list = []
     for reference in references:
+        ref_id = reference.get('xml:id', "")
         title = reference.find("title", attrs={"level": "a"})
         if title is None:
             title = reference.find("title", attrs={"level": "m"})
@@ -255,7 +256,7 @@ def parse_references(article):
                 authors.append(firstname + " " + lastname)
         authors = "; ".join(authors)
         reference_list.append(
-            {"title": title, "journal": journal, "year": year, "authors": authors}
+            {"ref_id": ref_id, "title": title, "journal": journal, "year": year, "authors": authors}
         )
     return reference_list
 
