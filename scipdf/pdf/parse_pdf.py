@@ -3,8 +3,12 @@ import os
 import os.path as op
 from glob import glob
 import urllib
+from typing import Dict 
 import subprocess
 import requests
+import fitz
+from PIL import Image
+import io
 from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm, tqdm_notebook
 
@@ -43,7 +47,7 @@ def parse_pdf(
     pdf_path: str,
     fulltext: bool = True,
     soup: bool = False,
-    return_coordinates: bool = True,
+    return_coordinates: bool = False,
     grobid_url: str = GROBID_URL,
 ):
     """
@@ -75,7 +79,7 @@ def parse_pdf(
         url = "%s/api/processFulltextDocument" % grobid_url
     else:
         url = "%s/api/processHeaderDocument" % grobid_url
-
+    
     files = []
     if return_coordinates:
         files += [
@@ -92,21 +96,25 @@ def parse_pdf(
             parsed_article = None
         elif validate_url(pdf_path) and op.splitext(pdf_path)[-1] == ".pdf":
             page = urllib.request.urlopen(pdf_path).read()
-            parsed_article = requests.post(url, files={"input": page}).text
+            files += [("input", page)]
+            parsed_article = requests.post(url, files=files).text
         elif op.exists(pdf_path):
+            files += [("input", (open(pdf_path, "rb")))]
             parsed_article = requests.post(
-                url, files={"input": open(pdf_path, "rb")}
+                url, files=files
             ).text
         else:
             parsed_article = None
     elif isinstance(pdf_path, bytes):
         # assume that incoming is byte string
-        parsed_article = requests.post(url, files={"input": pdf_path}).text
+        files += [("input", (pdf_path))]
+        parsed_article = requests.post(url, files=files).text
     else:
         parsed_article = None
 
     if soup and parsed_article is not None:
         parsed_article = BeautifulSoup(parsed_article, "lxml")
+
     return parsed_article
 
 
@@ -268,7 +276,7 @@ def parse_figure_caption(article):
     figures_list = []
     figures = article.find_all("figure")
     for figure in figures:
-        figure_type = figure.attrs.get("type") or ""
+        figure_type = figure.attrs.get("type") or "figure"
         figure_id = figure.attrs.get("xml:id") or ""
         label = figure.find("label").text
         if figure_type == "table":
@@ -372,6 +380,7 @@ def parse_pdf_to_dict(
     as_list: bool = False,
     return_coordinates: bool = True,
     grobid_url: str = GROBID_URL,
+    parse_figures: bool = True,
 ):
     """
     Parse the given PDF and return dictionary of the parsed article
@@ -383,7 +392,7 @@ def parse_pdf_to_dict(
     soup: bool, whether to return BeautifulSoup or not
     as_list: bool, whether to return list of sections or not
     grobid_url: str, url to grobid server, default is `GROBID_URL`
-        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
+        This could be changed to "https://kermitt2-grobid.hf.space" for the cloud service
 
     Ouput
     =====
@@ -397,6 +406,7 @@ def parse_pdf_to_dict(
         grobid_url=grobid_url,
     )
     article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
+
     return article_dict
 
 
