@@ -3,8 +3,12 @@ import os
 import os.path as op
 from glob import glob
 import urllib
+from typing import Dict 
 import subprocess
 import requests
+import fitz
+from PIL import Image
+import io
 from bs4 import BeautifulSoup, NavigableString
 from tqdm import tqdm, tqdm_notebook
 
@@ -43,7 +47,7 @@ def parse_pdf(
     pdf_path: str,
     fulltext: bool = True,
     soup: bool = False,
-    return_coordinates: bool = True,
+    return_coordinates: bool = False,
     grobid_url: str = GROBID_URL,
 ):
     """
@@ -75,7 +79,7 @@ def parse_pdf(
         url = "%s/api/processFulltextDocument" % grobid_url
     else:
         url = "%s/api/processHeaderDocument" % grobid_url
-
+    
     files = []
     if return_coordinates:
         files += [
@@ -92,21 +96,25 @@ def parse_pdf(
             parsed_article = None
         elif validate_url(pdf_path) and op.splitext(pdf_path)[-1] == ".pdf":
             page = urllib.request.urlopen(pdf_path).read()
-            parsed_article = requests.post(url, files={"input": page}).text
+            files += [("input", page)]
+            parsed_article = requests.post(url, files=files).text
         elif op.exists(pdf_path):
+            files += [("input", (open(pdf_path, "rb")))]
             parsed_article = requests.post(
-                url, files={"input": open(pdf_path, "rb")}
+                url, files=files
             ).text
         else:
             parsed_article = None
     elif isinstance(pdf_path, bytes):
         # assume that incoming is byte string
-        parsed_article = requests.post(url, files={"input": pdf_path}).text
+        files += [("input", (pdf_path))]
+        parsed_article = requests.post(url, files=files).text
     else:
         parsed_article = None
 
     if soup and parsed_article is not None:
         parsed_article = BeautifulSoup(parsed_article, "lxml")
+
     return parsed_article
 
 
@@ -123,7 +131,7 @@ def parse_authors(article):
         middlename = middlename.text.strip() if middlename is not None else ""
         lastname = author.find("surname")
         lastname = lastname.text.strip() if lastname is not None else ""
-        if middlename is not "":
+        if middlename != "":
             authors.append(firstname + " " + middlename + " " + lastname)
         else:
             authors.append(firstname + " " + lastname)
@@ -155,17 +163,14 @@ def parse_abstract(article):
     return abstract
 
 
-def calculate_number_of_references(div):
+def find_references(div):
     """
-    For a given section, calculate number of references made in the section
+    For a given section, find references made in the section for publications, figures, tables
     """
-    n_publication_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
-    )
-    n_figure_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
-    )
-    return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
+    publication_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr" and "target" in ref.attrs]
+    figure_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "figure" and "target" in ref.attrs]
+    table_ref = [ref.attrs.get("target").strip("#") for ref in div.find_all("ref") if ref.attrs.get("type") == "table" and "target" in ref.attrs]
+    return {"publication_ref": publication_ref, "figure_ref": figure_ref, "table_ref": table_ref}
 
 
 def parse_sections(article, as_list: bool = False):
@@ -210,14 +215,15 @@ def parse_sections(article, as_list: bool = False):
             if not as_list:
                 text = "\n".join(text)
 
-        if heading is not "" or text is not "":
-            ref_dict = calculate_number_of_references(div)
+        if heading != "" or text != "":
+            ref_dict = find_references(div)
             sections.append(
                 {
                     "heading": heading,
                     "text": text,
-                    "n_publication_ref": ref_dict["n_publication_ref"],
-                    "n_figure_ref": ref_dict["n_figure_ref"],
+                    "publication_ref": ref_dict["publication_ref"],
+                    "figure_ref": ref_dict["figure_ref"],
+                    "table_ref": ref_dict["table_ref"],
                 }
             )
     return sections
@@ -232,13 +238,14 @@ def parse_references(article):
     references = references.find_all("biblstruct") if references is not None else []
     reference_list = []
     for reference in references:
+        ref_id = reference.get('xml:id', "")
         title = reference.find("title", attrs={"level": "a"})
         if title is None:
             title = reference.find("title", attrs={"level": "m"})
         title = title.text if title is not None else ""
         journal = reference.find("title", attrs={"level": "j"})
         journal = journal.text if journal is not None else ""
-        if journal is "":
+        if journal == "":
             journal = reference.find("publisher")
             journal = journal.text if journal is not None else ""
         year = reference.find("date")
@@ -251,13 +258,13 @@ def parse_references(article):
             middlename = middlename.text.strip() if middlename is not None else ""
             lastname = author.find("surname")
             lastname = lastname.text.strip() if lastname is not None else ""
-            if middlename is not "":
+            if middlename != "":
                 authors.append(firstname + " " + middlename + " " + lastname)
             else:
                 authors.append(firstname + " " + lastname)
         authors = "; ".join(authors)
         reference_list.append(
-            {"title": title, "journal": journal, "year": year, "authors": authors}
+            {"ref_id": ref_id, "title": title, "journal": journal, "year": year, "authors": authors}
         )
     return reference_list
 
@@ -269,7 +276,7 @@ def parse_figure_caption(article):
     figures_list = []
     figures = article.find_all("figure")
     for figure in figures:
-        figure_type = figure.attrs.get("type") or ""
+        figure_type = figure.attrs.get("type") or "figure"
         figure_id = figure.attrs.get("xml:id") or ""
         label = figure.find("label").text
         if figure_type == "table":
@@ -300,7 +307,7 @@ def parse_formulas(article):
         formula_id = formula.attrs["xml:id"] or ""
         formula_text = formula.text
         formula_coordinates = formula.attrs.get("coords") or ""
-        if formula_coordinates is not "":
+        if formula_coordinates != "":
             formula_coordinates = [float(x) for x in formula_coordinates.split(",")]
             formulas_list.append(
                 {
@@ -373,6 +380,7 @@ def parse_pdf_to_dict(
     as_list: bool = False,
     return_coordinates: bool = True,
     grobid_url: str = GROBID_URL,
+    parse_figures: bool = True,
 ):
     """
     Parse the given PDF and return dictionary of the parsed article
@@ -384,7 +392,7 @@ def parse_pdf_to_dict(
     soup: bool, whether to return BeautifulSoup or not
     as_list: bool, whether to return list of sections or not
     grobid_url: str, url to grobid server, default is `GROBID_URL`
-        This could be changed to "https://cloud.science-miner.com/grobid/" for the cloud service
+        This could be changed to "https://kermitt2-grobid.hf.space" for the cloud service
 
     Ouput
     =====
@@ -398,6 +406,7 @@ def parse_pdf_to_dict(
         grobid_url=grobid_url,
     )
     article_dict = convert_article_soup_to_dict(parsed_article, as_list=as_list)
+
     return article_dict
 
 
