@@ -4,4 +4,4 @@ pandas
 textstat
 beautifulsoup4
 requests
-fitz
+PyMuPDF
