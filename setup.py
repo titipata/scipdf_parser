@@ -4,7 +4,11 @@ from setuptools import find_packages, setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt" ,"r") as f:
+    requirements = list(map(lambda x: x.strip(), f.readlines()))
+
 if __name__ == "__main__":
+
     setup(
         name='scipdf',
         version='0.1dev',
@@ -15,7 +19,7 @@ if __name__ == "__main__":
         author='Titipat Achakulvisut',
         author_email='my.titipat@gmail.com',
         license='(c) MIT License 2019 Titipat Achakulvisut',
-        install_requires=['lxml', 'requests', 'spacy', 'pandas', 'textstat'],
+        install_requires=requirements ,
         packages=find_packages(),
         keywords=[
             "PDF parser",
