@@ -350,27 +350,31 @@ def convert_article_soup_to_dict(article, as_list: bool = False):
             ]
         }
     """
-    article_dict = {}
-    if article is not None:
-        title = article.find("title", attrs={"type": "main"})
-        title = title.text.strip() if title is not None else ""
-
-        article_dict["title"] = title
-        article_dict["authors"] = parse_authors(article)
-        article_dict["pub_date"] = parse_date(article)
-        article_dict["abstract"] = parse_abstract(article)
-        article_dict["sections"] = parse_sections(article, as_list=as_list)
-        article_dict["references"] = parse_references(article)
-        article_dict["figures"] = parse_figure_caption(article)
-        article_dict["formulas"] = parse_formulas(article)
-
-        doi = article.find("idno", attrs={"type": "DOI"})
-        doi = doi.text if doi is not None else ""
-        article_dict["doi"] = doi
-
-        return article_dict
-    else:
+    if article is None:
         return None
+    if article.string is not None:
+        if '[NO_BLOCKS] PDF parsing resulted in empty content' in article.string  or '[GENERAL] An exception occurred while running Grobid.' in article.string:
+            return None
+        
+    article_dict = {}
+
+    title = article.find("title", attrs={"type": "main"})
+    title = title.text.strip() if title is not None else ""
+
+    article_dict["title"] = title
+    article_dict["authors"] = parse_authors(article)
+    article_dict["pub_date"] = parse_date(article)
+    article_dict["abstract"] = parse_abstract(article)
+    article_dict["sections"] = parse_sections(article, as_list=as_list)
+    article_dict["references"] = parse_references(article)
+    article_dict["figures"] = parse_figure_caption(article)
+    article_dict["formulas"] = parse_formulas(article)
+
+    doi = article.find("idno", attrs={"type": "DOI"})
+    doi = doi.text if doi is not None else ""
+    article_dict["doi"] = doi
+
+    return article_dict
 
 
 def parse_pdf_to_dict(
