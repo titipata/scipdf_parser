@@ -351,11 +351,8 @@ def convert_article_soup_to_dict(article, as_list: bool = False):
             ]
         }
     """
-    if article is None:
+    if article is None or (article.contents == [] and article.text == ""):
         return None
-    if article.string is not None:
-        if '[NO_BLOCKS] PDF parsing resulted in empty content' in article.string  or '[GENERAL] An exception occurred while running Grobid.' in article.string:
-            return None
         
     article_dict = {}
 
