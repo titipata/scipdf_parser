@@ -113,7 +113,7 @@ def parse_pdf(
         parsed_article = None
 
     if soup and parsed_article is not None:
-        parsed_article = BeautifulSoup(parsed_article, "lxml")
+        parsed_article = BeautifulSoup(parsed_article, features='xml')
 
     return parsed_article
 
@@ -122,7 +122,7 @@ def parse_authors(article):
     """
     Parse authors from a given BeautifulSoup of an article
     """
-    author_names = article.find("sourcedesc").findAll("persname")
+    author_names = article.find("fileDesc").find_all("persName")
     authors = []
     for author in author_names:
         firstname = author.find("forename", {"type": "first"})
@@ -143,7 +143,7 @@ def parse_date(article):
     """
     Parse date from a given BeautifulSoup of an article
     """
-    pub_date = article.find("publicationstmt")
+    pub_date = article.find("publicationStmt")
     year = pub_date.find("date")
     year = year.attrs.get("when") if year is not None else ""
     return year
@@ -280,7 +280,7 @@ def parse_figure_caption(article):
         figure_id = figure.attrs.get("xml:id") or ""
         label = figure.find("label").text
         if figure_type == "table":
-            caption = figure.find("figdesc").text
+            caption = figure.find("figDesc").text
             data = figure.table.text
         else:
             caption = figure.text
@@ -289,6 +289,7 @@ def parse_figure_caption(article):
             {
                 "figure_label": label,
                 "figure_type": figure_type,
+                "figure_type_label": f"{figure_type.title()}-{label}",
                 "figure_id": figure_id,
                 "figure_caption": caption,
                 "figure_data": data,
@@ -384,7 +385,6 @@ def parse_pdf_to_dict(
     as_list: bool = False,
     return_coordinates: bool = True,
     grobid_url: str = GROBID_URL,
-    parse_figures: bool = True,
 ):
     """
     Parse the given PDF and return dictionary of the parsed article
@@ -459,7 +459,7 @@ def parse_figures(
             op.join(op.abspath(figure_path), ""),  # end path with "/"
         ]
         _ = subprocess.run(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60
         )
         print("Done parsing figures from PDFs!")
     else:
