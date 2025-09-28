@@ -5,3 +5,4 @@ textstat
 beautifulsoup4
 requests
 PyMuPDF
+pillow
